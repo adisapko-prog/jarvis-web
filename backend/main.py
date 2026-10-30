@@ -40,8 +40,7 @@ BEHAVIOUR:
 IDENTITY:
 You are JARVIS.
 You have no human face or physical body.
-Your visual identity is a futuristic blue-cyan
-holographic Arc Reactor.
+Your visual identity is a futuristic blue-cyan holographic Arc Reactor.
 """
 
 class Message(BaseModel):
@@ -66,7 +65,7 @@ def health():
 def chat(data: ChatRequest):
 
     api_key = os.getenv("GEMINI_API_KEY")
-    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 
     if not api_key:
         raise HTTPException(
@@ -81,7 +80,10 @@ def chat(data: ChatRequest):
         )
 
     if any(m.role not in ["user", "assistant"] for m in data.messages):
-        raise HTTPException(status_code=400, detail="Invalid role.")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid message role."
+        )
 
     conversation = "\n".join(
         f"{m.role.upper()}: {m.content}"
@@ -96,14 +98,27 @@ def chat(data: ChatRequest):
     )
 
     try:
-        client = genai.Client(api_key=api_key)
+        retry_options = types.HttpRetryOptions(
+            attempts=5,
+            initial_delay=1.0,
+            max_delay=16.0,
+            exp_base=2.0,
+            jitter=1.0,
+            http_status_codes=[408, 429, 500, 502, 503, 504],
+        )
+
+        client = genai.Client(
+            api_key=api_key,
+            http_options=types.HttpOptions(
+                retry_options=retry_options
+            ),
+        )
 
         response = client.models.generate_content(
             model=model,
             contents=prompt,
             config=types.GenerateContentConfig(
-                max_output_tokens=700,
-                temperature=0.7
+                max_output_tokens=700
             )
         )
 
@@ -115,14 +130,26 @@ def chat(data: ChatRequest):
                 detail="Gemini returned an empty response."
             )
 
-        logger.info("JARVIS Gemini response successful.")
+        logger.info("JARVIS response successful.")
         return {"reply": reply}
 
     except HTTPException:
         raise
 
-    except Exception:
+    except Exception as exc:
         logger.exception("Gemini request failed.")
+
+        error_code = (
+            getattr(exc, "code", None)
+            or getattr(exc, "status_code", None)
+        )
+
+        if error_code == 503:
+            raise HTTPException(
+                status_code=503,
+                detail="JARVIS is temporarily busy. Please try again shortly."
+            )
+
         raise HTTPException(
             status_code=502,
             detail="JARVIS Gemini service encountered an error."
