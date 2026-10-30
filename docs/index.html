@@ -1,1 +1,182 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J.A.R.V.I.S. | Personal AI</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;min-height:100vh;color:#e7faff;
+ background:radial-gradient(ellipse at 50% 35%,#12334b,#07121e 55%,#030810);
+ font-family:Arial,sans-serif;
+}
+header{
+ padding:22px 7%;display:flex;justify-content:space-between;
+ border-bottom:1px solid #38c9e533;letter-spacing:2px;
+}
+.brand{font-size:19px;color:#75eaff;font-weight:bold}
+.status{font-size:11px;color:#67e9c5}
+main{text-align:center;padding:45px 15px}
+h1{font-size:clamp(26px,5vw,44px);font-weight:400}
+h1 span{color:#5deaff}
+.subtitle{color:#8caebe;font-size:13px}
+.reactor{
+ width:210px;height:210px;margin:45px auto 35px;
+ border-radius:50%;position:relative;display:grid;place-items:center;
+ background:repeating-conic-gradient(#173f58 0deg 7deg,#8bd8e7 8deg 10deg,#102b3b 11deg 17deg);
+ box-shadow:0 0 0 9px #0a1b29,0 0 0 11px #58eaff88,0 0 55px #00cfff66;
+ animation:glow 3s infinite alternate,spin 35s linear infinite;
+}
+.reactor:before{
+ content:"";position:absolute;inset:23px;border-radius:50%;
+ border:7px solid #36576b;box-shadow:inset 0 0 25px #00cfff88;
+}
+.core{
+ width:85px;height:85px;border-radius:50%;z-index:2;
+ background:radial-gradient(circle,#fff,#9af8ff 15%,#21cfff 45%,#07518b 75%);
+ box-shadow:0 0 30px #43eaff,0 0 70px #00aeff;
+}
+.ring{
+ position:absolute;inset:-35px;border:1px solid #58eaff88;
+ border-radius:50%;transform:rotateX(65deg);
+}
+.ring.two{inset:-55px;transform:rotateY(65deg)}
+@keyframes glow{to{filter:brightness(1.5)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.console{
+ max-width:720px;margin:0 auto;text-align:left;
+ border:1px solid #2c718b;background:#081725;
+ box-shadow:0 15px 55px #0008;
+}
+.console-title{
+ padding:15px;border-bottom:1px solid #28566a;
+ color:#69eaff;font-size:11px;letter-spacing:2px;
+}
+.messages{height:230px;overflow-y:auto;padding:18px}
+.msg{margin-bottom:18px;line-height:1.6;font-size:14px}
+.msg b{display:block;font-size:10px;color:#59eaff;letter-spacing:2px}
+.msg.user b{color:#b4cbd8}
+.msg p{margin:6px 0;color:#d7eaf1;white-space:pre-wrap}
+form{display:flex;padding:12px;gap:10px;border-top:1px solid #28566a}
+input{
+ flex:1;min-width:0;background:#06111d;border:1px solid #28566a;
+ color:white;padding:15px;outline:none;font-size:14px;
+}
+button{
+ background:#0b526b;border:1px solid #57eaff;
+ color:white;padding:0 22px;cursor:pointer;
+}
+button:hover{background:#087c9d}
+button:disabled{opacity:.5;cursor:wait}
+.note{text-align:center;color:#638398;font-size:10px;margin-top:15px}
+footer{text-align:center;color:#54788a;font-size:10px;letter-spacing:2px;padding:35px}
+@media(max-width:500px){
+ header{padding:18px}.reactor{transform:scale(.85);margin:25px auto}
+ form{padding:8px}button{padding:0 15px}
+}
+</style>
+</head>
+
+<body>
+<header>
+ <div class="brand">J.A.R.V.I.S.</div>
+ <div class="status">● SYSTEM INITIALIZED</div>
+</header>
+
+<main>
+ <p style="font-size:10px;letter-spacing:3px;color:#79a9bd">
+ STARK-INSPIRED INTELLIGENCE SYSTEM
+ </p>
+ <h1>Good day. <span>How may I assist?</span></h1>
+ <p class="subtitle">Your personal intelligence interface is ready.</p>
+
+ <div class="reactor">
+  <div class="ring"></div>
+  <div class="ring two"></div>
+  <div class="core"></div>
+ </div>
+
+ <section class="console">
+  <div class="console-title">JARVIS COMMUNICATION CHANNEL</div>
+  <div class="messages" id="messages">
+   <div class="msg">
+    <b>JARVIS</b>
+    <p>All systems are standing by. How may I help you?</p>
+   </div>
+  </div>
+  <form id="chatForm">
+   <input id="prompt" placeholder="Speak to JARVIS..." autocomplete="off">
+   <button id="send" type="submit">SEND</button>
+  </form>
+ </section>
+ <p class="note">AI responses may contain inaccuracies. Verify important information.</p>
+</main>
+
+<footer>J.A.R.V.I.S. WEB EDITION · PERSONAL INTELLIGENCE</footer>
+
+<script>
+const API_BASE = "https://YOUR-BACKEND.onrender.com";
+const conversation = [];
+
+const form = document.getElementById("chatForm");
+const input = document.getElementById("prompt");
+const messages = document.getElementById("messages");
+const send = document.getElementById("send");
+
+function addMessage(role, text) {
+ const box = document.createElement("div");
+ box.className = "msg" + (role === "user" ? " user" : "");
+ const label = document.createElement("b");
+ label.textContent = role === "user" ? "YOU" : "JARVIS";
+ const p = document.createElement("p");
+ p.textContent = text;
+ box.append(label, p);
+ messages.appendChild(box);
+ messages.scrollTop = messages.scrollHeight;
+ return p;
+}
+
+form.addEventListener("submit", async (event) => {
+ event.preventDefault();
+ const text = input.value.trim();
+ if (!text || send.disabled) return;
+
+ input.value = "";
+ addMessage("user", text);
+ conversation.push({role:"user", content:text});
+ send.disabled = true;
+ send.textContent = "...";
+ const replyBox = addMessage("assistant", "Processing your request...");
+
+ try {
+  if (API_BASE.includes("YOUR-BACKEND")) {
+   throw new Error("Cloud AI backend has not been connected yet.");
+  }
+
+  const response = await fetch(API_BASE + "/api/chat", {
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({messages:conversation.slice(-12)})
+  });
+
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.detail || "AI service error");
+
+  replyBox.textContent = data.reply;
+  conversation.push({role:"assistant", content:data.reply});
+
+ } catch(error) {
+  replyBox.textContent = error.message;
+ } finally {
+  send.disabled = false;
+  send.textContent = "SEND";
+  input.focus();
+ }
+});
+</script>
+</body>
+</html>
+
