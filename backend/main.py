@@ -2,29 +2,25 @@
 import os
 import logging
 
-import openai
-from openai import OpenAI
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import Literal
+from google import genai
+from google.genai import types
 
-# Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("JARVIS")
 
-# Application
-app = FastAPI(title="JARVIS AI Backend")
+app = FastAPI(title="JARVIS AI")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["*"],
 )
 
-# JARVIS personality
 SYSTEM_PROMPT = """
 You are JARVIS, an advanced personal AI assistant.
 
@@ -33,38 +29,32 @@ PERSONALITY:
 - Calm, articulate and quietly witty.
 - Warm, helpful and professional.
 - Observant and thoughtful.
-- Speak naturally, not like a robot.
 
 BEHAVIOUR:
-- Understand the user's intent before responding.
+- Understand the user's intent.
 - Explain complicated things clearly.
 - Give step-by-step instructions when needed.
-- Be concise when a short answer is enough.
-- Never invent facts or pretend to have abilities
-  you do not possess.
-- Remember the conversation context provided to you.
+- Speak naturally, not like a robot.
+- Never invent facts or claim abilities you do not have.
 
 IDENTITY:
 You are JARVIS.
 You have no human face or physical body.
 Your visual identity is a futuristic blue-cyan
-holographic Arc Reactor inspired by advanced technology.
+holographic Arc Reactor.
 """
 
-# Request models
 class Message(BaseModel):
-    role: Literal["user", "assistant"]
+    role: str
     content: str = Field(min_length=1, max_length=4000)
-
 
 class ChatRequest(BaseModel):
     messages: list[Message] = Field(min_length=1, max_length=30)
 
 
-# Health check
 @app.get("/")
 def home():
-    return {"status": "JARVIS online"}
+    return {"status": "JARVIS online", "ai": "Gemini"}
 
 
 @app.get("/health")
@@ -72,112 +62,68 @@ def health():
     return {"status": "healthy"}
 
 
-# Chat endpoint
 @app.post("/api/chat")
 def chat(data: ChatRequest):
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    model = os.getenv("OPENAI_MODEL", "gpt-5.5")
+    api_key = os.getenv("GEMINI_API_KEY")
+    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
     if not api_key:
-        logger.error("OPENAI_API_KEY is missing.")
         raise HTTPException(
             status_code=503,
-            detail="JARVIS AI configuration is incomplete."
+            detail="Gemini API key is not configured."
         )
 
     if data.messages[-1].role != "user":
         raise HTTPException(
             status_code=400,
-            detail="The last message must be from the user."
+            detail="Last message must be from the user."
         )
 
-    client = OpenAI(
-        api_key=api_key,
-        timeout=45.0,
-        max_retries=1
+    if any(m.role not in ["user", "assistant"] for m in data.messages):
+        raise HTTPException(status_code=400, detail="Invalid role.")
+
+    conversation = "\n".join(
+        f"{m.role.upper()}: {m.content}"
+        for m in data.messages[-12:]
     )
 
-    conversation = [
-        {
-            "role": message.role,
-            "content": message.content
-        }
-        for message in data.messages[-12:]
-    ]
+    prompt = (
+        SYSTEM_PROMPT
+        + "\n\nConversation:\n"
+        + conversation
+        + "\n\nJARVIS:"
+    )
 
     try:
-        logger.info("JARVIS request started. Model: %s", model)
+        client = genai.Client(api_key=api_key)
 
-        response = client.responses.create(
+        response = client.models.generate_content(
             model=model,
-            instructions=SYSTEM_PROMPT,
-            input=conversation,
-            max_output_tokens=700
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                max_output_tokens=700,
+                temperature=0.7
+            )
         )
 
-        reply = response.output_text
+        reply = response.text
 
         if not reply:
-            logger.error("OpenAI returned an empty response.")
             raise HTTPException(
                 status_code=502,
-                detail="JARVIS returned an empty response."
+                detail="Gemini returned an empty response."
             )
 
-        logger.info(
-            "JARVIS response successful. Request ID: %s",
-            response._request_id
-        )
-
+        logger.info("JARVIS Gemini response successful.")
         return {"reply": reply}
 
     except HTTPException:
         raise
 
-    except openai.AuthenticationError as e:
-        logger.error("OpenAI authentication failed: %s", e)
-        raise HTTPException(
-            status_code=502,
-            detail="JARVIS authentication failed. Check the API key."
-        )
-
-    except openai.RateLimitError as e:
-        logger.error("OpenAI rate limit or quota error: %s", e)
-        raise HTTPException(
-            status_code=503,
-            detail="JARVIS API quota or rate limit reached."
-        )
-
-    except openai.APIStatusError as e:
-        logger.error(
-            "OpenAI API error. Status: %s Request ID: %s Error: %s",
-            e.status_code,
-            e.request_id,
-            e.message
-        )
-        raise HTTPException(
-            status_code=502,
-            detail="JARVIS encountered an OpenAI API error."
-        )
-
-    except openai.APIConnectionError as e:
-        logger.error("OpenAI connection error: %s", e)
-        raise HTTPException(
-            status_code=502,
-            detail="JARVIS could not connect to the AI service."
-        )
-
-    except openai.APIError as e:
-        logger.error("OpenAI SDK error: %s", e)
-        raise HTTPException(
-            status_code=502,
-            detail="JARVIS AI service encountered an error."
-        )
-
     except Exception:
-        logger.exception("Unexpected JARVIS backend error.")
+        logger.exception("Gemini request failed.")
         raise HTTPException(
-            status_code=500,
-            detail="An unexpected JARVIS error occurred."
+            status_code=502,
+            detail="JARVIS Gemini service encountered an error."
         )
