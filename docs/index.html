@@ -4,179 +4,584 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>J.A.R.V.I.S. | Personal AI</title>
+<title>J.A.R.V.I.S. | AI Interface</title>
 
 <style>
-*{box-sizing:border-box}
-body{
- margin:0;min-height:100vh;color:#e7faff;
- background:radial-gradient(ellipse at 50% 35%,#12334b,#07121e 55%,#030810);
- font-family:Arial,sans-serif;
+:root {
+  --cyan: #00eaff;
+  --blue: #087cff;
+  --bg: #020812;
+  --panel: rgba(5, 25, 43, .88);
+  --muted: #83a9c5;
 }
-header{
- padding:22px 7%;display:flex;justify-content:space-between;
- border-bottom:1px solid #38c9e533;letter-spacing:2px;
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: #e9faff;
+  background:
+    radial-gradient(ellipse at 50% 35%, #092746 0%, #03101f 42%, #01040a 100%);
+  font-family: "Segoe UI", Arial, sans-serif;
+  overflow-x: hidden;
 }
-.brand{font-size:19px;color:#75eaff;font-weight:bold}
-.status{font-size:11px;color:#67e9c5}
-main{text-align:center;padding:45px 15px}
-h1{font-size:clamp(26px,5vw,44px);font-weight:400}
-h1 span{color:#5deaff}
-.subtitle{color:#8caebe;font-size:13px}
-.reactor{
- width:210px;height:210px;margin:45px auto 35px;
- border-radius:50%;position:relative;display:grid;place-items:center;
- background:repeating-conic-gradient(#173f58 0deg 7deg,#8bd8e7 8deg 10deg,#102b3b 11deg 17deg);
- box-shadow:0 0 0 9px #0a1b29,0 0 0 11px #58eaff88,0 0 55px #00cfff66;
- animation:glow 3s infinite alternate,spin 35s linear infinite;
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: .17;
+  background-image:
+    linear-gradient(rgba(0,234,255,.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,234,255,.13) 1px, transparent 1px);
+  background-size: 45px 45px;
+  mask-image: linear-gradient(to bottom, black, transparent);
 }
-.reactor:before{
- content:"";position:absolute;inset:23px;border-radius:50%;
- border:7px solid #36576b;box-shadow:inset 0 0 25px #00cfff88;
+
+header {
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5%;
+  border-bottom: 1px solid rgba(0,234,255,.2);
+  background: rgba(0,8,18,.7);
+  backdrop-filter: blur(12px);
 }
-.core{
- width:85px;height:85px;border-radius:50%;z-index:2;
- background:radial-gradient(circle,#fff,#9af8ff 15%,#21cfff 45%,#07518b 75%);
- box-shadow:0 0 30px #43eaff,0 0 70px #00aeff;
+
+.brand {
+  color: var(--cyan);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 5px;
 }
-.ring{
- position:absolute;inset:-35px;border:1px solid #58eaff88;
- border-radius:50%;transform:rotateX(65deg);
+
+.status {
+  color: #7dffbd;
+  font-size: 12px;
+  letter-spacing: 2px;
 }
-.ring.two{inset:-55px;transform:rotateY(65deg)}
-@keyframes glow{to{filter:brightness(1.5)}}
-@keyframes spin{to{transform:rotate(360deg)}}
-.console{
- max-width:720px;margin:0 auto;text-align:left;
- border:1px solid #2c718b;background:#081725;
- box-shadow:0 15px 55px #0008;
+
+.status::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 9px;
+  border-radius: 50%;
+  background: #48ff9a;
+  box-shadow: 0 0 12px #48ff9a;
 }
-.console-title{
- padding:15px;border-bottom:1px solid #28566a;
- color:#69eaff;font-size:11px;letter-spacing:2px;
+
+main {
+  width: min(1200px, 94%);
+  margin: auto;
+  padding: 35px 0 50px;
 }
-.messages{height:230px;overflow-y:auto;padding:18px}
-.msg{margin-bottom:18px;line-height:1.6;font-size:14px}
-.msg b{display:block;font-size:10px;color:#59eaff;letter-spacing:2px}
-.msg.user b{color:#b4cbd8}
-.msg p{margin:6px 0;color:#d7eaf1;white-space:pre-wrap}
-form{display:flex;padding:12px;gap:10px;border-top:1px solid #28566a}
-input{
- flex:1;min-width:0;background:#06111d;border:1px solid #28566a;
- color:white;padding:15px;outline:none;font-size:14px;
+
+.hero {
+  text-align: center;
+  margin-bottom: 30px;
 }
-button{
- background:#0b526b;border:1px solid #57eaff;
- color:white;padding:0 22px;cursor:pointer;
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(28px, 5vw, 48px);
+  letter-spacing: 9px;
+  color: white;
+  text-shadow: 0 0 25px rgba(0,234,255,.55);
 }
-button:hover{background:#087c9d}
-button:disabled{opacity:.5;cursor:wait}
-.note{text-align:center;color:#638398;font-size:10px;margin-top:15px}
-footer{text-align:center;color:#54788a;font-size:10px;letter-spacing:2px;padding:35px}
-@media(max-width:500px){
- header{padding:18px}.reactor{transform:scale(.85);margin:25px auto}
- form{padding:8px}button{padding:0 15px}
+
+.hero p {
+  color: var(--muted);
+  letter-spacing: 4px;
+  font-size: 11px;
+}
+
+.reactor-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 15px 0 30px;
+}
+
+.reactor {
+  width: 190px;
+  height: 190px;
+  position: relative;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle, #0b3553 0%, #041525 55%, #010813 72%);
+  border: 2px solid rgba(0,234,255,.65);
+  box-shadow:
+    0 0 20px #00cfff,
+    0 0 65px rgba(0,150,255,.55),
+    inset 0 0 35px rgba(0,234,255,.35);
+  animation: reactorPulse 3s ease-in-out infinite;
+}
+
+.reactor::before, .reactor::after {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 3px solid transparent;
+  border-top-color: var(--cyan);
+  border-bottom-color: var(--blue);
+  border-radius: 50%;
+  animation: spin 7s linear infinite;
+}
+
+.reactor::after {
+  inset: 27px;
+  border: 2px dashed rgba(0,234,255,.8);
+  animation-direction: reverse;
+  animation-duration: 12s;
+}
+
+.core {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(circle, white 0%, #75faff 22%, #009dff 60%, #063d91 100%);
+  box-shadow: 0 0 25px white, 0 0 60px #00cfff;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes reactorPulse {
+  50% { transform: scale(1.035); filter: brightness(1.3); }
+}
+
+.reactor.listening {
+  box-shadow: 0 0 30px #00ff9d, 0 0 90px #00ff9d;
+}
+
+.reactor.speaking {
+  box-shadow: 0 0 30px #00aaff, 0 0 100px #087cff;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 22px;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid rgba(0,234,255,.28);
+  border-radius: 15px;
+  padding: 22px;
+  box-shadow: 0 0 30px rgba(0,100,200,.09);
+  backdrop-filter: blur(12px);
+}
+
+.panel h2 {
+  margin: 0 0 18px;
+  color: var(--cyan);
+  font-size: 13px;
+  letter-spacing: 3px;
+}
+
+.system-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 13px 0;
+  border-bottom: 1px solid rgba(0,234,255,.12);
+  font-size: 13px;
+}
+
+.system-row span:last-child { color: #69ffb2; }
+
+#messages {
+  height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding-right: 6px;
+}
+
+.message {
+  max-width: 90%;
+  padding: 13px 15px;
+  border-radius: 12px;
+  line-height: 1.5;
+  font-size: 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.user {
+  align-self: flex-end;
+  background: rgba(0,125,255,.2);
+  border: 1px solid rgba(0,150,255,.4);
+}
+
+.assistant {
+  align-self: flex-start;
+  background: rgba(0,234,255,.08);
+  border: 1px solid rgba(0,234,255,.2);
+}
+
+.chat-label {
+  color: var(--cyan);
+  font-size: 10px;
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+}
+
+#chatForm {
+  display: flex;
+  gap: 9px;
+  margin-top: 15px;
+}
+
+input {
+  flex: 1;
+  min-width: 0;
+  background: #020d19;
+  color: white;
+  border: 1px solid rgba(0,234,255,.3);
+  border-radius: 9px;
+  padding: 14px;
+  outline: none;
+}
+
+input:focus { border-color: var(--cyan); }
+
+button {
+  border: 1px solid rgba(0,234,255,.55);
+  color: var(--cyan);
+  background: rgba(0,130,200,.12);
+  padding: 12px 15px;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: .2s;
+  font-weight: 700;
+}
+
+button:hover {
+  background: rgba(0,234,255,.2);
+  box-shadow: 0 0 15px rgba(0,234,255,.3);
+}
+
+button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.voice-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.mic-button {
+  flex: 1;
+  background: rgba(0,255,160,.1);
+  border-color: #00d995;
+  color: #65ffc4;
+}
+
+.mic-button.active {
+  background: rgba(0,255,160,.3);
+  box-shadow: 0 0 20px rgba(0,255,160,.35);
+}
+
+#statusText {
+  min-height: 20px;
+  margin-top: 13px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+footer {
+  text-align: center;
+  color: #52738d;
+  font-size: 10px;
+  letter-spacing: 3px;
+  margin-top: 35px;
+}
+
+@media(max-width: 750px) {
+  .layout { grid-template-columns: 1fr; }
+  .reactor { width: 155px; height: 155px; }
+  #messages { height: 260px; }
+  header { padding: 0 4%; }
+  .brand { font-size: 17px; }
 }
 </style>
 </head>
 
 <body>
+
 <header>
- <div class="brand">J.A.R.V.I.S.</div>
- <div class="status">● SYSTEM INITIALIZED</div>
+  <div class="brand">J.A.R.V.I.S.</div>
+  <div class="status">SYSTEM ONLINE</div>
 </header>
 
 <main>
- <p style="font-size:10px;letter-spacing:3px;color:#79a9bd">
- STARK-INSPIRED INTELLIGENCE SYSTEM
- </p>
- <h1>Good day. <span>How may I assist?</span></h1>
- <p class="subtitle">Your personal intelligence interface is ready.</p>
+  <section class="hero">
+    <h1>JUST A RATHER VERY INTELLIGENT SYSTEM</h1>
+    <p>PERSONAL ARTIFICIAL INTELLIGENCE</p>
+  </section>
 
- <div class="reactor">
-  <div class="ring"></div>
-  <div class="ring two"></div>
-  <div class="core"></div>
- </div>
+  <section class="reactor-area">
+    <div class="reactor" id="reactor">
+      <div class="core"></div>
+    </div>
+  </section>
 
- <section class="console">
-  <div class="console-title">JARVIS COMMUNICATION CHANNEL</div>
-  <div class="messages" id="messages">
-   <div class="msg">
-    <b>JARVIS</b>
-    <p>All systems are standing by. How may I help you?</p>
-   </div>
-  </div>
-  <form id="chatForm">
-   <input id="prompt" placeholder="Speak to JARVIS..." autocomplete="off">
-   <button id="send" type="submit">SEND</button>
-  </form>
- </section>
- <p class="note">AI responses may contain inaccuracies. Verify important information.</p>
+  <section class="layout">
+
+    <div class="panel">
+      <h2>SYSTEM DIAGNOSTICS</h2>
+      <div class="system-row"><span>Core system</span><span>ONLINE</span></div>
+      <div class="system-row"><span>Gemini connection</span><span>CONNECTED</span></div>
+      <div class="system-row"><span>Voice recognition</span><span id="voiceStatus">READY</span></div>
+      <div class="system-row"><span>Voice synthesis</span><span id="synthStatus">READY</span></div>
+      <div class="system-row"><span>Interface</span><span>ACTIVE</span></div>
+      <div id="statusText">Awaiting your command, sir.</div>
+    </div>
+
+    <div class="panel">
+      <h2>JARVIS COMMUNICATION TERMINAL</h2>
+
+      <div id="messages">
+        <div class="message assistant">
+          <div class="chat-label">JARVIS</div>
+          Good day. All systems are online and fully at your service. How may I assist you today?
+        </div>
+      </div>
+
+      <form id="chatForm">
+        <input id="userInput" type="text" placeholder="Enter your command..." autocomplete="off">
+        <button id="sendButton" type="submit">SEND</button>
+      </form>
+
+      <div class="voice-controls">
+        <button class="mic-button" id="micButton" type="button">🎙 SPEAK</button>
+        <button id="stopButton" type="button">■ STOP VOICE</button>
+        <button id="clearButton" type="button">CLEAR</button>
+      </div>
+    </div>
+
+  </section>
+
+  <footer>STARK INDUSTRIES • ADVANCED AI INTERFACE</footer>
 </main>
 
-<footer>J.A.R.V.I.S. WEB EDITION · PERSONAL INTELLIGENCE</footer>
-
 <script>
-const API_BASE =  "https://jarvis-ai-rbl3.onrender.com";
-const conversation = [];
+const API_BASE = "https://jarvis-ai-rbl3.onrender.com";
 
-const form = document.getElementById("chatForm");
-const input = document.getElementById("prompt");
-const messages = document.getElementById("messages");
-const send = document.getElementById("send");
+const messagesElement = document.getElementById("messages");
+const input = document.getElementById("userInput");
+const sendButton = document.getElementById("sendButton");
+const micButton = document.getElementById("micButton");
+const statusText = document.getElementById("statusText");
+const reactor = document.getElementById("reactor");
 
-function addMessage(role, text) {
- const box = document.createElement("div");
- box.className = "msg" + (role === "user" ? " user" : "");
- const label = document.createElement("b");
- label.textContent = role === "user" ? "YOU" : "JARVIS";
- const p = document.createElement("p");
- p.textContent = text;
- box.append(label, p);
- messages.appendChild(box);
- messages.scrollTop = messages.scrollHeight;
- return p;
+let conversation = [];
+let busy = false;
+let recognition = null;
+let listening = false;
+
+function setStatus(message) {
+  statusText.textContent = message;
 }
 
-form.addEventListener("submit", async (event) => {
- event.preventDefault();
- const text = input.value.trim();
- if (!text || send.disabled) return;
+function addMessage(role, content) {
+  const box = document.createElement("div");
+  box.className = "message " + role;
 
- input.value = "";
- addMessage("user", text);
- conversation.push({role:"user", content:text});
- send.disabled = true;
- send.textContent = "...";
- const replyBox = addMessage("assistant", "Processing your request...");
+  const label = document.createElement("div");
+  label.className = "chat-label";
+  label.textContent = role === "user" ? "YOU" : "JARVIS";
 
- try {
-  if (API_BASE.includes("YOUR-BACKEND")) {
-   throw new Error("Cloud AI backend has not been connected yet.");
+  const text = document.createElement("div");
+  text.textContent = content;
+
+  box.appendChild(label);
+  box.appendChild(text);
+  messagesElement.appendChild(box);
+  messagesElement.scrollTop = messagesElement.scrollHeight;
+}
+
+function speak(text) {
+  if (!("speechSynthesis" in window)) {
+    setStatus("Voice output is not supported in this browser.");
+    return;
   }
 
-  const response = await fetch(API_BASE + "/api/chat", {
-   method:"POST",
-   headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({messages:conversation.slice(-12)})
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-US";
+  utterance.rate = 0.94;
+  utterance.pitch = 0.85;
+  utterance.volume = 1;
+
+  utterance.onstart = () => {
+    reactor.classList.add("speaking");
+    document.getElementById("synthStatus").textContent = "SPEAKING";
+  };
+
+  utterance.onend = () => {
+    reactor.classList.remove("speaking");
+    document.getElementById("synthStatus").textContent = "READY";
+  };
+
+  utterance.onerror = () => {
+    reactor.classList.remove("speaking");
+    document.getElementById("synthStatus").textContent = "READY";
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+async function sendMessage(message) {
+  if (!message.trim() || busy) return;
+
+  busy = true;
+  sendButton.disabled = true;
+  micButton.disabled = true;
+
+  addMessage("user", message);
+  conversation.push({ role: "user", content: message });
+
+  input.value = "";
+  setStatus("Processing your request...");
+
+  try {
+    const response = await fetch(`${API_BASE}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: conversation.slice(-20)
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || "The AI service is unavailable.");
+    }
+
+    if (!data.reply) {
+      throw new Error("JARVIS returned an empty response.");
+    }
+
+    conversation.push({
+      role: "assistant",
+      content: data.reply
+    });
+
+    addMessage("assistant", data.reply);
+    setStatus("Command completed. Awaiting further instructions.");
+    speak(data.reply);
+
+  } catch (error) {
+    console.error(error);
+    addMessage("assistant", "I apologise, sir. " + error.message);
+    setStatus("Connection error. Please try again.");
+  } finally {
+    busy = false;
+    sendButton.disabled = false;
+    micButton.disabled = false;
+    input.focus();
+  }
+}
+
+document.getElementById("chatForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  sendMessage(input.value);
+});
+
+const SpeechRecognition =
+  window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    listening = true;
+    micButton.classList.add("active");
+    micButton.textContent = "🔴 LISTENING...";
+    reactor.classList.add("listening");
+    document.getElementById("voiceStatus").textContent = "LISTENING";
+    setStatus("I'm listening, sir...");
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    setStatus("Recognised: " + transcript);
+    sendMessage(transcript);
+  };
+
+  recognition.onerror = (event) => {
+    console.error("Speech recognition error:", event.error);
+    setStatus("Microphone error: " + event.error);
+  };
+
+  recognition.onend = () => {
+    listening = false;
+    micButton.classList.remove("active");
+    micButton.textContent = "🎙 SPEAK";
+    reactor.classList.remove("listening");
+    document.getElementById("voiceStatus").textContent = "READY";
+  };
+
+  micButton.addEventListener("click", () => {
+    if (busy) return;
+
+    if (listening) {
+      recognition.stop();
+      return;
+    }
+
+    window.speechSynthesis?.cancel();
+
+    try {
+      recognition.start();
+    } catch (error) {
+      setStatus("Microphone could not start. Please try again.");
+      console.error(error);
+    }
   });
 
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.detail || "AI service error");
+} else {
+  micButton.disabled = true;
+  micButton.textContent = "MIC NOT SUPPORTED";
+  document.getElementById("voiceStatus").textContent = "UNAVAILABLE";
+  setStatus("Try the latest Google Chrome or Microsoft Edge for voice input.");
+}
 
-  replyBox.textContent = data.reply;
-  conversation.push({role:"assistant", content:data.reply});
+document.getElementById("stopButton").addEventListener("click", () => {
+  window.speechSynthesis?.cancel();
 
- } catch(error) {
-  replyBox.textContent = error.message;
- } finally {
-  send.disabled = false;
-  send.textContent = "SEND";
-  input.focus();
- }
+  if (recognition && listening) {
+    recognition.stop();
+  }
+
+  reactor.classList.remove("speaking", "listening");
+  setStatus("Voice playback stopped.");
 });
+
+document.getElementById("clearButton").addEventListener("click", () => {
+  conversation = [];
+  messagesElement.innerHTML = "";
+  window.speechSynthesis?.cancel();
+  setStatus("Conversation cleared.");
+});
+
 </script>
 </body>
 </html>
-
